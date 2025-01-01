@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оформлення замовлення</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: auto;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #27ae60;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <h1>Оформлення замовлення</h1>
+    <form id="orderForm">
+        <input type="text" id="name" placeholder="Ваше ім'я" required />
+        <input type="tel" id="phone" placeholder="Телефон" required />
+        <input type="text" id="address" placeholder="Адреса доставки" required />
+        <select id="category" required>
+            <option value="">Оберіть категорію</option>
+            <option value="1 категорія">1 категорія</option>
+            <option value="2 категорія">2 категорія</option>
+            <option value="3 категорія">3 категорія</option>
+            <option value="4 категорія">4 категорія</option>
+        </select>
+        <input type="text" id="mechanism" placeholder="Ні або так" required />
+        <input type="text" id="mattress" placeholder="Ні або так" required />
+        <input type="number" id="width" placeholder="Ширина (см)" required />
+        <input type="number" id="height" placeholder="Висота (см)" required />
+        <input type="number" id="price" placeholder="Ціна" required readonly />
+        <button type="submit">Оформити замовлення</button>
+    </form>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_ERGnGkhXBLDyvBvrkWB9zeFFCq-PcCM",
+            authDomain: "backup-caa60.firebaseapp.com",
+            databaseURL: "https://backup-caa60-default-rtdb.firebaseio.com",
+            projectId: "backup-caa60",
+            storageBucket: "backup-caa60.firebasestorage.app",
+            messagingSenderId: "117177204790",
+            appId: "1:117177204790:web:e923d6da9653f7f72f5897",
+            measurementId: "G-YZXG21EMTV"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Автозаполнение данных из localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('name').value = localStorage.getItem('name') || '';
+            document.getElementById('phone').value = localStorage.getItem('phone') || '';
+            document.getElementById('address').value = localStorage.getItem('address') || '';
+            document.getElementById('category').value = localStorage.getItem('category') || '';
+            document.getElementById('mechanism').value = localStorage.getItem('mechanism') || '';
+            document.getElementById('mattress').value = localStorage.getItem('mattress') || '';
+            document.getElementById('width').value = localStorage.getItem('width') || '';
+            document.getElementById('height').value = localStorage.getItem('height') || '';
+            document.getElementById('price').value = localStorage.getItem('price') || '';
+        });
+
+        // Функция для расчета цены
+        function calculatePrice() {
+            const mechanism = document.getElementById('mechanism').value.toLowerCase();
+            const mattress = document.getElementById('mattress').value.toLowerCase();
+            let price = 25000; // Цена по умолчанию
+
+            // Логика для механизма и матраса
+            if (mechanism === 'так' && mattress === 'так') {
+                price = 45000;
+            } else if (mechanism === 'так') {
+                price = 29000;
+            } else if (mattress === 'так') {
+                price = 35000;
+            }
+
+            // Логика для категории
+            const category = document.getElementById('category').value;
+            if (category === '1 категорія') {
+                price += 1000;
+            } else if (category === '2 категорія') {
+                price += 2000;
+            } else if (category === '3 категорія') {
+                price += 3000;
+            } else if (category === '4 категорія') {
+                price += 4000;
+            }
+
+            // Логика для ширины и высоты
+            const width = parseInt(document.getElementById('width').value);
+            const height = parseInt(document.getElementById('height').value);
+            let widthPrice = 0;
+            let heightPrice = 0;
+
+            if (width === 220) {
+                widthPrice = 2000;
+            } else if (width === 240) {
+                widthPrice = 3000;
+            } else if (width === 210) {
+                widthPrice = 1000;
+            }
+
+            if (height === 220) {
+                heightPrice = 500;
+            } else if (height === 240) {
+                heightPrice = 1000;
+            }
+
+            // Финальная цена
+            price += widthPrice + heightPrice;
+
+            // Обновляем цену в форме
+            document.getElementById('price').value = price;
+        }
+
+        // Добавляем обработчики событий для расчетов
+        document.getElementById('mechanism').addEventListener('input', calculatePrice);
+        document.getElementById('mattress').addEventListener('input', calculatePrice);
+        document.getElementById('width').addEventListener('input', calculatePrice);
+        document.getElementById('height').addEventListener('input', calculatePrice);
+        document.getElementById('category').addEventListener('change', calculatePrice);
+
+        // Обработчик отправки формы
+        document.getElementById('orderForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+            const category = document.getElementById('category').value;
+            const mechanism = document.getElementById('mechanism').value;
+            const mattress = document.getElementById('mattress').value;
+            const width = document.getElementById('width').value;
+            const height = document.getElementById('height').value;
+            const price = document.getElementById('price').value;
+
+            const newOrderRef = db.ref('orders').push();
+            newOrderRef.set({
+                name: name,
+                phone: phone,
+                address: address,
+                category: category,
+                mechanism: mechanism,
+                mattress: mattress,
+                width: width,
+                height: height,
+                price: price
+            }).then(() => {
+                alert('Замовлення оформлено!');
+                document.getElementById('orderForm').reset();
+                calculatePrice(); // Recalculate price after form reset
+            }).catch((error) => {
+                alert('Помилка при оформленні замовлення: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
